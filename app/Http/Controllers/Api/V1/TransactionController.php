@@ -4,18 +4,26 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Services\TransferService;
+use App\Http\Requests\DepositRequest;
+use App\Http\Requests\TransferRequest;
+use App\Models\User;
 
 class TransactionController extends Controller
 {
     protected $transferService;
 
-    public function __construct(\App\Services\TransferService $transferService)
+    public function __construct(TransferService $transferService)
     {
         $this->transferService = $transferService;
     }
 
-    public function deposit(\App\Http\Requests\DepositRequest $request, \App\Models\User $user)
+    public function deposit(DepositRequest $request, User $user)
     {
+        if ($user->id !== $request->user()->id) {
+            return response()->json(['error' => 'You can only deposit funds to your own account.'], 403);
+        }
+
         try {
             $amountInCents = (int)round($request->validated('amount') * 100);
             $transaction = $this->transferService->deposit($user, $amountInCents);
@@ -27,11 +35,11 @@ class TransactionController extends Controller
         }
     }
 
-    public function transfer(\App\Http\Requests\TransferRequest $request)
+    public function transfer(TransferRequest $request)
     {
         try {
-            $sender = \App\Models\User::findOrFail($request->validated('sender_id'));
-            $receiver = \App\Models\User::findOrFail($request->validated('receiver_id'));
+            $sender = $request->user();
+            $receiver = User::findOrFail($request->validated('receiver_id'));
             $amountInCents = (int)round($request->validated('amount') * 100);
 
             $transaction = $this->transferService->transfer($sender, $receiver, $amountInCents);

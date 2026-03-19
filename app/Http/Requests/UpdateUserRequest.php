@@ -2,8 +2,8 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateUserRequest extends FormRequest
 {
@@ -29,7 +29,7 @@ class UpdateUserRequest extends FormRequest
                 'required',
                 'string',
                 'email',
-                \Illuminate\Validation\Rule::unique('users')->ignore($this->route('user'))
+                Rule::unique('users')->ignore($this->route('user'))
             ],
             'age' => 'sometimes|required|integer|min:0',
         ];

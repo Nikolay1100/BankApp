@@ -57,8 +57,8 @@ class TransferService
             }
 
             return DB::transaction(function () use ($sender, $receiver, $amount) {
-                  // Lock rows to prevent race conditions. 
-                  // Better to lock in a consistent order (e.g. by ID) to prevent deadlocks.
+
+                  // Lock rows to prevent race conditions
                   $first = $sender->id < $receiver->id ? $sender : $receiver;
                   $second = $sender->id < $receiver->id ? $receiver : $sender;
 
