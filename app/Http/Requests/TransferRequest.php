@@ -12,18 +12,20 @@ class TransferRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, ValidationRule|array<mixed>|string>
+     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
         return [
-            //
+            'sender_id' => 'required|exists:users,id',
+            'receiver_id' => 'required|exists:users,id|different:sender_id',
+            'amount' => 'required|numeric|min:0.01',
         ];
     }
 }
