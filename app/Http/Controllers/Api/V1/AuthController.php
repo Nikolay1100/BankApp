@@ -16,7 +16,7 @@ class AuthController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'age' => $request->age,
-            'password' => \Illuminate\Support\Facades\Hash::make($request->password),
+            'password' => Hash::make($request->password),
             'balance' => 0,
         ]);
 
