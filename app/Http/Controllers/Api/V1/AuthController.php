@@ -9,6 +9,8 @@ use App\Models\Account;
 use App\Models\Currency;
 use Illuminate\Support\Facades\Hash;
 use App\Http\Requests\RegisterRequest;
+use Money\Money;
+use Money\Currency as MoneyCurrency;
 
 class AuthController extends Controller
 {
@@ -28,7 +30,7 @@ class AuthController extends Controller
 
         $user->accounts()->create([
             'currency_id' => $usd->id,
-            'balance' => 0,
+            'balance' => new Money('0', new MoneyCurrency('USD')),
             'is_default' => true,
         ]);
 

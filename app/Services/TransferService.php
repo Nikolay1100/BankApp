@@ -9,6 +9,8 @@ use App\Models\Transaction;
 use Illuminate\Support\Facades\DB;
 use App\Exceptions\InsufficientFundsException;
 use App\Exceptions\InvalidTransferException;
+use Money\Money;
+use App\Exceptions\AppException;
 
 class TransferService
 {
@@ -16,19 +18,19 @@ class TransferService
        * Deposit funds to a user account.
        *
        * @param User $user
-       * @param int $amount Amount in cents.
+       * @param Money $amount
        * @return Transaction
-       * @throws Exception
+       * @throws AppException
        */
       public function deposit(
             User $user,
-            int $amount,
+            Money $amount,
             ?string $idempotencyKey = null,
             array $metadata = []
             ): Transaction
       {
 
-            if ($amount <= 0) {
+            if (!$amount->isPositive()) {
                   throw new InvalidTransferException("Amount must be positive.");
             }
 
@@ -45,12 +47,12 @@ class TransferService
                         ->lockForUpdate()
                         ->firstOrFail();
 
-                  $lockedAccount->balance += $amount;
+                  $lockedAccount->balance = $lockedAccount->balance->add($amount);
                   $lockedAccount->save();
 
                   return Transaction::create(array_merge([
                         'receiver_account_id' => $lockedAccount->id,
-                        'amount' => $amount,
+                        'amount' => $amount->getAmount(),
                         'type' => 'deposit',
                         'idempotency_key' => $idempotencyKey,
                   ], $metadata));
@@ -62,20 +64,20 @@ class TransferService
        *
        * @param User $sender
        * @param User $receiver
-       * @param int $amount Amount in cents.
+       * @param Money $amount
        * @return Transaction
-       * @throws Exception
+       * @throws AppException
        */
       public function transfer(
             User $sender,
             User $receiver,
-            int $amount,
+            Money $amount,
             ?string $idempotencyKey = null,
             array $metadata = []
             ): Transaction
       {
 
-            if ($amount <= 0) {
+            if (!$amount->isPositive()) {
                   throw new InvalidTransferException("Amount must be positive.");
             }
 
@@ -101,17 +103,19 @@ class TransferService
                   $senderAcc = $lockedFirstAcc->id === $senderAccountId ? $lockedFirstAcc : $lockedSecondAcc;
                   $receiverAcc = $lockedFirstAcc->id === $receiverAccountId ? $lockedFirstAcc : $lockedSecondAcc;
 
-                  if ($senderAcc->balance < $amount) {
+                  if ($senderAcc->balance->lessThan($amount)) {
                         throw new InsufficientFundsException("Insufficient funds.");
                   }
 
-                  $senderAcc->decrement('balance', $amount);
-                  $receiverAcc->increment('balance', $amount);
+                  $senderAcc->balance = $senderAcc->balance->subtract($amount);
+                  $receiverAcc->balance = $receiverAcc->balance->add($amount);
+                  $senderAcc->save();
+                  $receiverAcc->save();
 
                   return Transaction::create(array_merge([
                         'sender_account_id' => $senderAcc->id,
                         'receiver_account_id' => $receiverAcc->id,
-                        'amount' => $amount,
+                        'amount' => $amount->getAmount(),
                         'type' => 'transfer',
                         'idempotency_key' => $idempotencyKey,
                   ], $metadata));

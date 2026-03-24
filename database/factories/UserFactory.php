@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Money\Money;
 
 /**
  * @extends Factory<User>
@@ -47,7 +48,7 @@ class UserFactory extends Factory
 
             $user->accounts()->create([
                 'currency_id' => $currency->id,
-                'balance' => fake()->numberBetween(100, 100000),
+                'balance' => new Money((string)fake()->numberBetween(100, 100000), new \Money\Currency($currency->code)),
                 'is_default' => true,
             ]);
         });

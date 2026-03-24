@@ -24,10 +24,9 @@ class TransactionController extends Controller
             return response()->json(['error' => 'You can only deposit funds to your own account.'], 403);
         }
 
-        $amountInCents = (int)round($request->validated('amount') * 100);
         $transaction = $this->transferService->deposit(
             $user,
-            $amountInCents,
+            $request->getMoney(),
             $request->header('Idempotency-Key'),
         ['ip_address' => $request->ip(), 'user_agent' => $request->userAgent()]
         );
@@ -37,14 +36,10 @@ class TransactionController extends Controller
 
     public function transfer(TransferRequest $request)
     {
-        $sender = $request->user();
-        $receiver = User::findOrFail($request->validated('receiver_id'));
-        $amountInCents = (int)round($request->validated('amount') * 100);
-
         $transaction = $this->transferService->transfer(
-            $sender,
-            $receiver,
-            $amountInCents,
+            $request->user(),
+            $request->receiver(),
+            $request->getMoney(),
             $request->header('Idempotency-Key'),
         ['ip_address' => $request->ip(), 'user_agent' => $request->userAgent()]
         );

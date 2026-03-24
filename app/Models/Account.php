@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Casts\MoneyCast;
 
 class Account extends Model
 {
@@ -12,6 +13,15 @@ class Account extends Model
             'balance',
             'is_default',
       ];
+
+      protected $with = ['currency'];
+
+      protected function casts(): array
+      {
+            return [
+                  'balance' => MoneyCast::class ,
+            ];
+      }
 
       public function user()
       {
