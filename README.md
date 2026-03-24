@@ -1,6 +1,6 @@
 # BankApp - Secure Financial Transfer API
 
-[![Laravel Version](https://img.shields.io/badge/Laravel-11.x-red.svg)](https://laravel.com)
+[![Laravel Version](https://img.shields.io/badge/Laravel-12.x-red.svg)](https://laravel.com)
 [![PHP Version](https://img.shields.io/badge/PHP-8.2%2B-blue.svg)](https://php.net)
 
 A high-performance, secure financial engine for handling multi-currency accounts and peer-to-peer transfers. Built with a focus on data integrity, concurrency safety, and modern software design patterns.
