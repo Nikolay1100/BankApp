@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use Exception;
 use App\Models\User;
 use App\Models\Account;
 use App\Models\Transaction;
@@ -105,6 +104,10 @@ class TransferService
 
                   if ($senderAcc->balance->lessThan($amount)) {
                         throw new InsufficientFundsException("Insufficient funds.");
+                  }
+
+                  if ($senderAcc->currency_id !== $receiverAcc->currency_id) {
+                        throw new InvalidTransferException("Currency mismatch between sender and receiver accounts.");
                   }
 
                   $senderAcc->balance = $senderAcc->balance->subtract($amount);
