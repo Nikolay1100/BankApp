@@ -2,11 +2,13 @@
 
 namespace App\Services;
 
+use Exception;
 use App\Models\User;
 use App\Models\Account;
 use App\Models\Transaction;
 use Illuminate\Support\Facades\DB;
-use Exception;
+use App\Exceptions\InsufficientFundsException;
+use App\Exceptions\InvalidTransferException;
 
 class TransferService
 {
@@ -27,7 +29,7 @@ class TransferService
       {
 
             if ($amount <= 0) {
-                  throw new Exception("Amount must be positive.");
+                  throw new InvalidTransferException("Amount must be positive.");
             }
 
             if ($idempotencyKey) {
@@ -74,11 +76,11 @@ class TransferService
       {
 
             if ($amount <= 0) {
-                  throw new Exception("Amount must be positive.");
+                  throw new InvalidTransferException("Amount must be positive.");
             }
 
             if ($sender->id === $receiver->id) {
-                  throw new Exception("Sender and receiver cannot be the same user.");
+                  throw new InvalidTransferException("Sender and receiver cannot be the same user.");
             }
 
             if ($idempotencyKey) {
@@ -100,7 +102,7 @@ class TransferService
                   $receiverAcc = $lockedFirstAcc->id === $receiverAccountId ? $lockedFirstAcc : $lockedSecondAcc;
 
                   if ($senderAcc->balance < $amount) {
-                        throw new Exception("Insufficient funds.");
+                        throw new InsufficientFundsException("Insufficient funds.");
                   }
 
                   $senderAcc->decrement('balance', $amount);

@@ -24,41 +24,31 @@ class TransactionController extends Controller
             return response()->json(['error' => 'You can only deposit funds to your own account.'], 403);
         }
 
-        try {
-            $amountInCents = (int)round($request->validated('amount') * 100);
-            $transaction = $this->transferService->deposit(
-                $user,
-                $amountInCents,
-                $request->header('Idempotency-Key'),
-            ['ip_address' => $request->ip(), 'user_agent' => $request->userAgent()]
-            );
+        $amountInCents = (int)round($request->validated('amount') * 100);
+        $transaction = $this->transferService->deposit(
+            $user,
+            $amountInCents,
+            $request->header('Idempotency-Key'),
+        ['ip_address' => $request->ip(), 'user_agent' => $request->userAgent()]
+        );
 
-            return response()->json($transaction, 201);
-        }
-        catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 400);
-        }
+        return response()->json($transaction, 201);
     }
 
     public function transfer(TransferRequest $request)
     {
-        try {
-            $sender = $request->user();
-            $receiver = User::findOrFail($request->validated('receiver_id'));
-            $amountInCents = (int)round($request->validated('amount') * 100);
+        $sender = $request->user();
+        $receiver = User::findOrFail($request->validated('receiver_id'));
+        $amountInCents = (int)round($request->validated('amount') * 100);
 
-            $transaction = $this->transferService->transfer(
-                $sender,
-                $receiver,
-                $amountInCents,
-                $request->header('Idempotency-Key'),
-            ['ip_address' => $request->ip(), 'user_agent' => $request->userAgent()]
-            );
+        $transaction = $this->transferService->transfer(
+            $sender,
+            $receiver,
+            $amountInCents,
+            $request->header('Idempotency-Key'),
+        ['ip_address' => $request->ip(), 'user_agent' => $request->userAgent()]
+        );
 
-            return response()->json($transaction, 201);
-        }
-        catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 400);
-        }
+        return response()->json($transaction, 201);
     }
 }
