@@ -12,7 +12,9 @@ class TransactionControllerTest extends TestCase
 
     public function test_user_can_deposit_to_own_account()
     {
-        $user = \App\Models\User::factory()->create(['balance' => 0]);
+        $user = \App\Models\User::factory()->create();
+        $account = $user->defaultAccount;
+        $account->update(['balance' => new \Money\Money(0, new \Money\Currency('USD'))]);
 
         $response = $this->actingAs($user)
             ->postJson("/api/v1/users/{$user->id}/deposit", [
@@ -20,9 +22,10 @@ class TransactionControllerTest extends TestCase
         ]);
 
         $response->assertStatus(201);
-        $this->assertEquals(10050, $user->fresh()->balance);
+        // Balance returns Money object, so comparison must be with string cents
+        $this->assertEquals("10050", $account->fresh()->balance->getAmount());
         $this->assertDatabaseHas('transactions', [
-            'receiver_id' => $user->id,
+            'receiver_account_id' => $account->id,
             'amount' => 10050,
             'type' => 'deposit',
         ]);
@@ -43,8 +46,15 @@ class TransactionControllerTest extends TestCase
 
     public function test_user_can_transfer_money_to_others()
     {
-        $sender = \App\Models\User::factory()->create(['balance' => 20000]); // 200.00
-        $receiver = \App\Models\User::factory()->create(['balance' => 0]);
+        $sender = \App\Models\User::factory()->create();
+        $receiver = \App\Models\User::factory()->create();
+
+        $senderAcc = $sender->defaultAccount;
+        $receiverAcc = $receiver->defaultAccount;
+
+        // Give sender some money manually
+        $senderAcc->update(['balance' => new \Money\Money(20000, new \Money\Currency('USD'))]);
+        $receiverAcc->update(['balance' => new \Money\Money(0, new \Money\Currency('USD'))]);
 
         $response = $this->actingAs($sender)
             ->postJson("/api/v1/transfers", [
@@ -53,14 +63,17 @@ class TransactionControllerTest extends TestCase
         ]);
 
         $response->assertStatus(201);
-        $this->assertEquals(4925, $sender->fresh()->balance); // 20000 - 15075 = 4925
-        $this->assertEquals(15075, $receiver->fresh()->balance);
+        $this->assertEquals("4925", $senderAcc->fresh()->balance->getAmount()); // 20000 - 15075 = 4925
+        $this->assertEquals("15075", $receiverAcc->fresh()->balance->getAmount());
     }
 
     public function test_user_cannot_transfer_more_than_balance()
     {
-        $sender = \App\Models\User::factory()->create(['balance' => 5000]); // 50.00
+        $sender = \App\Models\User::factory()->create();
         $receiver = \App\Models\User::factory()->create();
+        $senderAcc = $sender->defaultAccount;
+
+        $senderAcc->update(['balance' => new \Money\Money(5000, new \Money\Currency('USD'))]);
 
         $response = $this->actingAs($sender)
             ->postJson("/api/v1/transfers", [
@@ -68,13 +81,15 @@ class TransactionControllerTest extends TestCase
             'amount' => 60,
         ]);
 
-        $response->assertStatus(400); // Bad request from TransferService exception
-        $this->assertEquals(5000, $sender->fresh()->balance);
+        $response->assertStatus(422); // Our AppException returns 422
+        $this->assertEquals("5000", $senderAcc->fresh()->balance->getAmount());
     }
 
     public function test_user_cannot_transfer_to_self()
     {
-        $user = \App\Models\User::factory()->create(['balance' => 10000]);
+        $user = \App\Models\User::factory()->create();
+        $account = $user->defaultAccount;
+        $account->update(['balance' => new \Money\Money(10000, new \Money\Currency('USD'))]);
 
         $response = $this->actingAs($user)
             ->postJson("/api/v1/transfers", [
@@ -82,6 +97,6 @@ class TransactionControllerTest extends TestCase
             'amount' => 10,
         ]);
 
-        $response->assertStatus(400);
+        $response->assertStatus(422);
     }
 }
