@@ -15,8 +15,12 @@ return new class extends Migration
             $table->id();
             $table->foreignId('sender_id')->nullable()->constrained('users');
             $table->foreignId('receiver_id')->nullable()->constrained('users');
-            $table->bigInteger('amount');
-            $table->string('type'); // 'deposit' or 'transfer'
+            $table->unsignedBigInteger('amount');
+            $table->string('type');
+            $table->string('idempotency_key', 64)->nullable()->unique()->index();
+            $table->string('ip_address', 45)->nullable();
+            $table->text('user_agent')->nullable();
+            $table->string('status')->default('completed')->index();
             $table->timestamps();
         });
     }

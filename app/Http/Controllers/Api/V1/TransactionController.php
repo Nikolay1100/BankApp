@@ -26,7 +26,12 @@ class TransactionController extends Controller
 
         try {
             $amountInCents = (int)round($request->validated('amount') * 100);
-            $transaction = $this->transferService->deposit($user, $amountInCents);
+            $transaction = $this->transferService->deposit(
+                $user,
+                $amountInCents,
+                $request->header('Idempotency-Key'),
+            ['ip_address' => $request->ip(), 'user_agent' => $request->userAgent()]
+            );
 
             return response()->json($transaction, 201);
         }
@@ -42,7 +47,13 @@ class TransactionController extends Controller
             $receiver = User::findOrFail($request->validated('receiver_id'));
             $amountInCents = (int)round($request->validated('amount') * 100);
 
-            $transaction = $this->transferService->transfer($sender, $receiver, $amountInCents);
+            $transaction = $this->transferService->transfer(
+                $sender,
+                $receiver,
+                $amountInCents,
+                $request->header('Idempotency-Key'),
+            ['ip_address' => $request->ip(), 'user_agent' => $request->userAgent()]
+            );
 
             return response()->json($transaction, 201);
         }

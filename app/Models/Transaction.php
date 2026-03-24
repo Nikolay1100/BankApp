@@ -11,6 +11,10 @@ class Transaction extends Model
         'receiver_id',
         'amount',
         'type',
+        'idempotency_key',
+        'ip_address',
+        'user_agent',
+        'status',
     ];
 
     public function sender()
