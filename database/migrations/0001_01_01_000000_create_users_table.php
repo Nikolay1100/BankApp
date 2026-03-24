@@ -16,7 +16,6 @@ return new class extends Migration
             $table->string('name');
             $table->string('email')->unique();
             $table->integer('age')->unsigned();
-            $table->unsignedBigInteger('balance')->default(0)->check('balance >= 0');
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password')->nullable();
             $table->rememberToken();

@@ -23,8 +23,17 @@ class User extends Authenticatable
         'email',
         'age',
         'password',
-        'balance',
     ];
+
+    public function accounts()
+    {
+        return $this->hasMany(Account::class);
+    }
+
+    public function defaultAccount()
+    {
+        return $this->hasOne(Account::class)->where('is_default', true);
+    }
 
     /**
      * The attributes that should be hidden for serialization.
@@ -51,11 +60,25 @@ class User extends Authenticatable
 
     public function sentTransactions()
     {
-        return $this->hasMany(Transaction::class , 'sender_id');
+        return $this->hasManyThrough(
+            Transaction::class ,
+            Account::class ,
+            'user_id',
+            'sender_account_id',
+            'id',
+            'id'
+        );
     }
 
     public function receivedTransactions()
     {
-        return $this->hasMany(Transaction::class , 'receiver_id');
+        return $this->hasManyThrough(
+            Transaction::class ,
+            Account::class ,
+            'user_id',
+            'receiver_account_id',
+            'id',
+            'id'
+        );
     }
 }

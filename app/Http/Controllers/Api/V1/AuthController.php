@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\Account;
+use App\Models\Currency;
 use Illuminate\Support\Facades\Hash;
 use App\Http\Requests\RegisterRequest;
 
@@ -17,7 +19,17 @@ class AuthController extends Controller
             'email' => $request->email,
             'age' => $request->age,
             'password' => Hash::make($request->password),
+        ]);
+
+        $usd = Currency::firstOrCreate(
+        ['code' => 'USD'],
+        ['name' => 'US Dollar', 'symbol' => '$']
+        );
+
+        $user->accounts()->create([
+            'currency_id' => $usd->id,
             'balance' => 0,
+            'is_default' => true,
         ]);
 
         $token = $user->createToken('auth_token')->plainTextToken;

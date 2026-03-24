@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\User;
+use App\Models\Account;
 use App\Models\Transaction;
 use Illuminate\Support\Facades\DB;
 use Exception;
@@ -17,8 +18,14 @@ class TransferService
        * @return Transaction
        * @throws Exception
        */
-      public function deposit(User $user, int $amount, ?string $idempotencyKey = null, array $metadata = []): Transaction
+      public function deposit(
+            User $user,
+            int $amount,
+            ?string $idempotencyKey = null,
+            array $metadata = []
+            ): Transaction
       {
+
             if ($amount <= 0) {
                   throw new Exception("Amount must be positive.");
             }
@@ -30,14 +37,17 @@ class TransferService
             }
 
             return DB::transaction(function () use ($user, $amount, $idempotencyKey, $metadata) {
-                  // Locking the user record to prevent race conditions during update
-                  $lockedUser = User::where('id', $user->id)->lockForUpdate()->first();
+                  $lockedAccount = clone $user->defaultAccount;
 
-                  $lockedUser->balance += $amount;
-                  $lockedUser->save();
+                  $lockedAccount = Account::where('id', $lockedAccount->id)
+                        ->lockForUpdate()
+                        ->firstOrFail();
+
+                  $lockedAccount->balance += $amount;
+                  $lockedAccount->save();
 
                   return Transaction::create(array_merge([
-                        'receiver_id' => $lockedUser->id,
+                        'receiver_account_id' => $lockedAccount->id,
                         'amount' => $amount,
                         'type' => 'deposit',
                         'idempotency_key' => $idempotencyKey,
@@ -54,8 +64,15 @@ class TransferService
        * @return Transaction
        * @throws Exception
        */
-      public function transfer(User $sender, User $receiver, int $amount, ?string $idempotencyKey = null, array $metadata = []): Transaction
+      public function transfer(
+            User $sender,
+            User $receiver,
+            int $amount,
+            ?string $idempotencyKey = null,
+            array $metadata = []
+            ): Transaction
       {
+
             if ($amount <= 0) {
                   throw new Exception("Amount must be positive.");
             }
@@ -72,29 +89,26 @@ class TransferService
 
             return DB::transaction(function () use ($sender, $receiver, $amount, $idempotencyKey, $metadata) {
 
-                  // Lock rows to prevent race conditions (locking in consistent order to avoid deadlocks)
-                  $senderId = $sender->id;
-                  $receiverId = $receiver->id;
+                  $senderAccountId = $sender->defaultAccount->id;
+                  $receiverAccountId = $receiver->defaultAccount->id;
+                  [$firstId, $secondId] = $senderAccountId < $receiverAccountId ? [$senderAccountId, $receiverAccountId] : [$receiverAccountId, $senderAccountId];
 
-                  [$firstId, $secondId] = $senderId < $receiverId ? [$senderId, $receiverId] : [$receiverId, $senderId];
+                  $lockedFirstAcc = Account::where('id', $firstId)->lockForUpdate()->firstOrFail();
+                  $lockedSecondAcc = Account::where('id', $secondId)->lockForUpdate()->firstOrFail();
 
-                  $lockedFirstUser = User::where('id', $firstId)->lockForUpdate()->first();
-                  $lockedSecondUser = User::where('id', $secondId)->lockForUpdate()->first();
+                  $senderAcc = $lockedFirstAcc->id === $senderAccountId ? $lockedFirstAcc : $lockedSecondAcc;
+                  $receiverAcc = $lockedFirstAcc->id === $receiverAccountId ? $lockedFirstAcc : $lockedSecondAcc;
 
-                  // Identify which locked record is sender and which is receiver
-                  $sender = $lockedFirstUser->id === $senderId ? $lockedFirstUser : $lockedSecondUser;
-                  $receiver = $lockedFirstUser->id === $receiverId ? $lockedFirstUser : $lockedSecondUser;
-
-                  if ($sender->balance < $amount) {
+                  if ($senderAcc->balance < $amount) {
                         throw new Exception("Insufficient funds.");
                   }
 
-                  $sender->decrement('balance', $amount);
-                  $receiver->increment('balance', $amount);
+                  $senderAcc->decrement('balance', $amount);
+                  $receiverAcc->increment('balance', $amount);
 
                   return Transaction::create(array_merge([
-                        'sender_id' => $sender->id,
-                        'receiver_id' => $receiver->id,
+                        'sender_account_id' => $senderAcc->id,
+                        'receiver_account_id' => $receiverAcc->id,
                         'amount' => $amount,
                         'type' => 'transfer',
                         'idempotency_key' => $idempotencyKey,

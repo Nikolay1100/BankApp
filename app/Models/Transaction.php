@@ -7,8 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 class Transaction extends Model
 {
     protected $fillable = [
-        'sender_id',
-        'receiver_id',
+        'sender_account_id',
+        'receiver_account_id',
         'amount',
         'type',
         'idempotency_key',
@@ -17,13 +17,13 @@ class Transaction extends Model
         'status',
     ];
 
-    public function sender()
+    public function senderAccount()
     {
-        return $this->belongsTo(User::class , 'sender_id');
+        return $this->belongsTo(Account::class , 'sender_account_id');
     }
 
-    public function receiver()
+    public function receiverAccount()
     {
-        return $this->belongsTo(User::class , 'receiver_id');
+        return $this->belongsTo(Account::class , 'receiver_account_id');
     }
 }

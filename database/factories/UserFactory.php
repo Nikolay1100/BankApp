@@ -28,11 +28,29 @@ class UserFactory extends Factory
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
             'age' => fake()->numberBetween(18, 80),
-            'balance' => 0,
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
         ];
+    }
+
+    /**
+     * Configure the model factory.
+     */
+    public function configure(): static
+    {
+        return $this->afterCreating(function (User $user) {
+            $currency = \App\Models\Currency::firstOrCreate(
+            ['code' => 'USD'],
+            ['name' => 'US Dollar', 'symbol' => '$']
+            );
+
+            $user->accounts()->create([
+                'currency_id' => $currency->id,
+                'balance' => fake()->numberBetween(100, 100000),
+                'is_default' => true,
+            ]);
+        });
     }
 
     /**
