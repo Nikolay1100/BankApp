@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Enums\TransactionType;
 
 class Transaction extends Model
 {
@@ -16,6 +17,16 @@ class Transaction extends Model
         'user_agent',
         'status',
     ];
+
+    /**
+     * Cast attributes to Enums
+     */
+    protected function casts(): array
+    {
+        return [
+            'type' => TransactionType::class ,
+        ];
+    }
 
     public function senderAccount()
     {

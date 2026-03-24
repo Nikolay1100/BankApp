@@ -10,6 +10,7 @@ use App\Exceptions\InsufficientFundsException;
 use App\Exceptions\InvalidTransferException;
 use Money\Money;
 use App\Exceptions\AppException;
+use App\Enums\TransactionType;
 
 class TransferService
 {
@@ -52,7 +53,7 @@ class TransferService
                   return Transaction::create(array_merge([
                         'receiver_account_id' => $lockedAccount->id,
                         'amount' => $amount->getAmount(),
-                        'type' => 'deposit',
+                        'type' => TransactionType::DEPOSIT,
                         'idempotency_key' => $idempotencyKey,
                   ], $metadata));
             });
@@ -119,7 +120,7 @@ class TransferService
                         'sender_account_id' => $senderAcc->id,
                         'receiver_account_id' => $receiverAcc->id,
                         'amount' => $amount->getAmount(),
-                        'type' => 'transfer',
+                        'type' => TransactionType::TRANSFER,
                         'idempotency_key' => $idempotencyKey,
                   ], $metadata));
             });
