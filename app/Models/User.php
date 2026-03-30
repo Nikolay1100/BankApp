@@ -7,6 +7,9 @@ use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class User extends Authenticatable
 {
@@ -25,16 +28,6 @@ class User extends Authenticatable
         'password',
     ];
 
-    public function accounts()
-    {
-        return $this->hasMany(Account::class);
-    }
-
-    public function defaultAccount()
-    {
-        return $this->hasOne(Account::class)->where('is_default', true);
-    }
-
     /**
      * The attributes that should be hidden for serialization.
      *
@@ -44,6 +37,16 @@ class User extends Authenticatable
         'password',
         'remember_token',
     ];
+
+    public function accounts(): HasMany
+    {
+        return $this->hasMany(Account::class);
+    }
+
+    public function defaultAccount(): HasOne
+    {
+        return $this->hasOne(Account::class)->where('is_default', true);
+    }
 
     /**
      * Get the attributes that should be cast.
@@ -58,7 +61,7 @@ class User extends Authenticatable
         ];
     }
 
-    public function sentTransactions()
+    public function sentTransactions(): HasManyThrough
     {
         return $this->hasManyThrough(
             Transaction::class ,
@@ -70,7 +73,7 @@ class User extends Authenticatable
         );
     }
 
-    public function receivedTransactions()
+    public function receivedTransactions(): HasManyThrough
     {
         return $this->hasManyThrough(
             Transaction::class ,

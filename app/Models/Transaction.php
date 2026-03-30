@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Enums\TransactionType;
 
 class Transaction extends Model
@@ -28,12 +29,12 @@ class Transaction extends Model
         ];
     }
 
-    public function senderAccount()
+    public function senderAccount(): BelongsTo
     {
         return $this->belongsTo(Account::class , 'sender_account_id');
     }
 
-    public function receiverAccount()
+    public function receiverAccount(): BelongsTo
     {
         return $this->belongsTo(Account::class , 'receiver_account_id');
     }
