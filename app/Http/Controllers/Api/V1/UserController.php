@@ -3,20 +3,19 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Http\Requests\UpdateUserRequest;
 use App\Models\User;
+use App\Http\Requests\User\UpdateUserRequest;
+use App\Http\Responses\V1\User\UpdateUserResponse;
 
 class UserController extends Controller
 {
-    public function update(UpdateUserRequest $request, User $user)
+    /**
+     * Updates the user's profile.
+     */
+    public function update(UpdateUserRequest $request, User $user): UpdateUserResponse
     {
-        if ($user->id !== $request->user()->id) {
-            return response()->json(['error' => 'You can only update your own profile.'], 403);
-        }
-
         $user->update($request->validated());
 
-        return response()->json($user);
+        return new UpdateUserResponse($user);
     }
 }

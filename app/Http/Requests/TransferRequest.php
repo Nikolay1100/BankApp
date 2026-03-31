@@ -15,7 +15,7 @@ class TransferRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return $this->user()->can('transfer', $this->receiver());
     }
 
     /**

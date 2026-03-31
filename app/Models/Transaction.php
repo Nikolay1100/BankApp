@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Enums\TransactionType;
+use App\Enums\TransactionStatus;
 
 class Transaction extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'sender_account_id',
         'receiver_account_id',
@@ -19,23 +22,18 @@ class Transaction extends Model
         'status',
     ];
 
-    /**
-     * Cast attributes to Enums
-     */
-    protected function casts(): array
+    protected $casts = [
+        'type' => TransactionType::class,
+        'status' => TransactionStatus::class,
+    ];
+
+    public function senderAccount()
     {
-        return [
-            'type' => TransactionType::class ,
-        ];
+        return $this->belongsTo(Account::class, 'sender_account_id');
     }
 
-    public function senderAccount(): BelongsTo
+    public function receiverAccount()
     {
-        return $this->belongsTo(Account::class , 'sender_account_id');
-    }
-
-    public function receiverAccount(): BelongsTo
-    {
-        return $this->belongsTo(Account::class , 'receiver_account_id');
+        return $this->belongsTo(Account::class, 'receiver_account_id');
     }
 }

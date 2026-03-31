@@ -4,74 +4,52 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\User;
-use App\Models\Account;
-use App\Models\Currency;
-use Illuminate\Support\Facades\Hash;
-use App\Http\Requests\RegisterRequest;
-use Money\Money;
-use Money\Currency as MoneyCurrency;
+use App\Http\Requests\Auth\RegisterRequest;
+use App\Http\Requests\Auth\LoginRequest;
+use App\Services\AuthService;
+use App\Http\Responses\V1\Auth\RegisterResponse;
+use App\Http\Responses\V1\Auth\LoginResponse;
+use App\Http\Responses\V1\Auth\LogoutResponse;
 
 class AuthController extends Controller
 {
-    public function register(RegisterRequest $request)
-    {
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'age' => $request->age,
-            'password' => Hash::make($request->password),
-        ]);
+    protected AuthService $authService;
 
-        $usd = Currency::firstOrCreate(
-        ['code' => 'USD'],
-        ['name' => 'US Dollar', 'symbol' => '$']
+    public function __construct(AuthService $authService)
+    {
+        $this->authService = $authService;
+    }
+
+    /**
+     * Registers a new user.
+     */
+    public function register(RegisterRequest $request): RegisterResponse
+    {
+        [$user, $token] = $this->authService->register($request->validated());
+
+        return new RegisterResponse($user, $token);
+    }
+
+    /**
+     * Authenticates a user.
+     */
+    public function login(LoginRequest $request): LoginResponse
+    {
+        [$user, $token] = $this->authService->login(
+            $request->email,
+            $request->password
         );
 
-        $user->accounts()->create([
-            'currency_id' => $usd->id,
-            'balance' => new Money('0', new MoneyCurrency('USD')),
-            'is_default' => true,
-        ]);
-
-        $token = $user->createToken('auth_token')->plainTextToken;
-
-        return response()->json([
-            'access_token' => $token,
-            'token_type' => 'Bearer',
-            'user' => $user,
-        ], 201);
+        return new LoginResponse($user, $token);
     }
 
-    public function login(Request $request)
+    /**
+     * Logs out the current user.
+     */
+    public function logout(Request $request): LogoutResponse
     {
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-        ]);
+        $this->authService->logout($request->user());
 
-        $user = User::where('email', $request->email)->first();
-
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            return response()->json([
-                'message' => 'Invalid login details'
-            ], 401);
-        }
-
-        $token = $user->createToken('auth_token')->plainTextToken;
-
-        return response()->json([
-            'access_token' => $token,
-            'token_type' => 'Bearer',
-        ]);
-    }
-
-    public function logout(Request $request)
-    {
-        $request->user()->currentAccessToken()->delete();
-
-        return response()->json([
-            'message' => 'Logged out'
-        ]);
+        return new LogoutResponse();
     }
 }

@@ -3,11 +3,12 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Models\User;
 use App\Services\TransferService;
 use App\Http\Requests\DepositRequest;
 use App\Http\Requests\TransferRequest;
-use App\Models\User;
+use App\Http\Responses\V1\Transaction\DepositResponse;
+use App\Http\Responses\V1\Transaction\TransferResponse;
 
 class TransactionController extends Controller
 {
@@ -18,12 +19,11 @@ class TransactionController extends Controller
         $this->transferService = $transferService;
     }
 
-    public function deposit(DepositRequest $request, User $user)
+    /**
+     * Handles funds deposit to the user's default account.
+     */
+    public function deposit(DepositRequest $request, User $user): DepositResponse
     {
-        if ($user->id !== $request->user()->id) {
-            return response()->json(['error' => 'You can only deposit funds to your own account.'], 403);
-        }
-
         $transaction = $this->transferService->deposit(
             $user,
             $request->getMoney(),
@@ -31,10 +31,13 @@ class TransactionController extends Controller
         ['ip_address' => $request->ip(), 'user_agent' => $request->userAgent()]
         );
 
-        return response()->json($transaction, 201);
+        return new DepositResponse($transaction);
     }
 
-    public function transfer(TransferRequest $request)
+    /**
+     * Handles funds transfer between users' default accounts.
+     */
+    public function transfer(TransferRequest $request): TransferResponse
     {
         $transaction = $this->transferService->transfer(
             $request->user(),
@@ -44,6 +47,6 @@ class TransactionController extends Controller
         ['ip_address' => $request->ip(), 'user_agent' => $request->userAgent()]
         );
 
-        return response()->json($transaction, 201);
+        return new TransferResponse($transaction);
     }
 }
