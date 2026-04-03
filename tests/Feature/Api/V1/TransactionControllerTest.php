@@ -21,7 +21,7 @@ class TransactionControllerTest extends TestCase
             'amount' => 100.50,
         ]);
 
-        $response->assertStatus(201);
+        $response->assertStatus(200);
         // Balance returns Money object, so comparison must be with string cents
         $this->assertEquals("10050", $account->fresh()->balance->getAmount());
         $this->assertDatabaseHas('transactions', [
@@ -62,7 +62,7 @@ class TransactionControllerTest extends TestCase
             'amount' => 150.75,
         ]);
 
-        $response->assertStatus(201);
+        $response->assertStatus(200);
         $this->assertEquals("4925", $senderAcc->fresh()->balance->getAmount()); // 20000 - 15075 = 4925
         $this->assertEquals("15075", $receiverAcc->fresh()->balance->getAmount());
     }

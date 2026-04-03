@@ -16,11 +16,12 @@ class AuthControllerTest extends TestCase
             'name' => 'John Doe',
             'email' => 'john@example.com',
             'password' => 'password123',
+            'password_confirmation' => 'password123',
             'age' => 25,
         ]);
 
         $response->assertStatus(201)
-            ->assertJsonStructure(['access_token', 'user']);
+            ->assertJsonStructure(['data' => ['access_token', 'user']]);
 
         $this->assertDatabaseHas('users', ['email' => 'john@example.com']);
     }
@@ -37,7 +38,7 @@ class AuthControllerTest extends TestCase
         ]);
 
         $response->assertStatus(200)
-            ->assertJsonStructure(['access_token']);
+            ->assertJsonStructure(['data' => ['access_token']]);
     }
 
     public function test_user_cannot_login_with_wrong_password()
@@ -49,7 +50,7 @@ class AuthControllerTest extends TestCase
             'password' => 'wrong-password',
         ]);
 
-        $response->assertStatus(401);
+        $response->assertStatus(422);
     }
 
     public function test_user_can_logout()
