@@ -83,7 +83,7 @@ All financial requests require `Authorization: Bearer <token>` and an optional `
 ## 🛡 Security Design
 
 -   **Race Condition Prevention**: Enforces a strict locking order (by account IDs) to prevent deadlocks during high-load concurrent transfers.
--   **Audit Trail**: Transactions store metadata including `ip_address`, `user_agent`, and `idempotency_key`.
+-   **Audit Trail**: Transactions store metadata including `ip_address`, `user_agent`, `idempotency_key` etc.
 -   **Data Consistency**: Database-level `CHECK` constraints on balances to ensure they never fall below zero.
 
 ---
