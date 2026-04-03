@@ -31,7 +31,8 @@ class TransferService
         Money $amount,
         ?string $idempotencyKey = null,
         array $metadata = []
-    ): Transaction {
+        ): Transaction
+    {
         if (!$amount->isPositive()) {
             throw new InvalidTransferException("Amount must be positive.");
         }
@@ -52,13 +53,19 @@ class TransferService
             $lockedAccount->balance = $lockedAccount->balance->add($amount);
             $lockedAccount->save();
 
-            return Transaction::create(array_merge([
+            $transaction = Transaction::create([
                 'receiver_account_id' => $lockedAccount->id,
                 'amount' => $amount->getAmount(),
                 'type' => TransactionType::DEPOSIT,
                 'status' => TransactionStatus::COMPLETED,
                 'idempotency_key' => $idempotencyKey,
-            ], $metadata));
+            ]);
+
+            if (!empty($metadata)) {
+                $transaction->detail()->create($metadata);
+            }
+
+            return $transaction;
         });
     }
 
@@ -80,7 +87,8 @@ class TransferService
         Money $amount,
         ?string $idempotencyKey = null,
         array $metadata = []
-    ): Transaction {
+        ): Transaction
+    {
         if (!$amount->isPositive()) {
             throw new InvalidTransferException("Amount must be positive.");
         }
@@ -119,14 +127,20 @@ class TransferService
             $senderAcc->save();
             $receiverAcc->save();
 
-            return Transaction::create(array_merge([
+            $transaction = Transaction::create([
                 'sender_account_id' => $senderAcc->id,
                 'receiver_account_id' => $receiverAcc->id,
                 'amount' => $amount->getAmount(),
                 'type' => TransactionType::TRANSFER,
                 'status' => TransactionStatus::COMPLETED,
                 'idempotency_key' => $idempotencyKey,
-            ], $metadata));
+            ]);
+
+            if (!empty($metadata)) {
+                $transaction->detail()->create($metadata);
+            }
+
+            return $transaction;
         });
     }
 }

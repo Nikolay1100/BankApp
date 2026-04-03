@@ -10,7 +10,6 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Illuminate\Auth\AuthenticationException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
-use Throwable;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -31,9 +30,10 @@ return Application::configure(basePath: dirname(__DIR__))
             if ($request->is('api/*')) {
                 $response = app(ResponseService::class);
 
-                // 1. Validation errors
+                // 1. Validation errors (422)
                 if ($e instanceof ValidationException) {
-                    return $response->badRequest($e->getMessage(), $e->errors());
+
+                    return $response->sendJsonResponse(false, 422, $e->getMessage(), $e->errors());
                 }
 
                 // 2. Access denied (403)

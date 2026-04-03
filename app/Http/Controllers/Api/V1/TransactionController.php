@@ -31,7 +31,11 @@ class TransactionController extends Controller
             $user,
             $request->getMoney(),
             $request->header('Idempotency-Key'),
-        ['ip_address' => $request->ip(), 'user_agent' => $request->userAgent()]
+            metadata: [
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'device_fingerprint' => $request->header('X-Device-Fingerprint')
+            ]
         );
 
         return new DepositResponse($transaction);
@@ -39,7 +43,7 @@ class TransactionController extends Controller
 
     /**
      * Handles funds transfer between users' default accounts.
-     * 
+     *
      * @throws InsufficientFundsException
      * @throws InvalidTransferException
      */
@@ -50,7 +54,11 @@ class TransactionController extends Controller
             $request->receiver(),
             $request->getMoney(),
             $request->header('Idempotency-Key'),
-        ['ip_address' => $request->ip(), 'user_agent' => $request->userAgent()]
+            metadata: [
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'device_fingerprint' => $request->header('X-Device-Fingerprint')
+            ]
         );
 
         return new TransferResponse($transaction);

@@ -18,23 +18,26 @@ class Transaction extends Model
         'amount',
         'type',
         'idempotency_key',
-        'ip_address',
-        'user_agent',
         'status',
     ];
 
     protected $casts = [
-        'type' => TransactionType::class,
-        'status' => TransactionStatus::class,
+        'type' => TransactionType::class ,
+        'status' => TransactionStatus::class ,
     ];
 
     public function senderAccount(): BelongsTo
     {
-        return $this->belongsTo(Account::class, 'sender_account_id');
+        return $this->belongsTo(Account::class , 'sender_account_id');
     }
 
     public function receiverAccount(): BelongsTo
     {
-        return $this->belongsTo(Account::class, 'receiver_account_id');
+        return $this->belongsTo(Account::class , 'receiver_account_id');
+    }
+
+    public function detail(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(TransactionDetail::class);
     }
 }
