@@ -2,17 +2,19 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Exceptions\InsufficientFundsException;
+use App\Exceptions\InvalidTransferException;
 use App\Http\Controllers\Controller;
-use App\Models\User;
-use App\Services\TransferService;
-use App\Http\Requests\DepositRequest;
-use App\Http\Requests\TransferRequest;
+use App\Http\Requests\Transactions\DepositRequest;
+use App\Http\Requests\Transactions\TransferRequest;
 use App\Http\Responses\V1\Transaction\DepositResponse;
 use App\Http\Responses\V1\Transaction\TransferResponse;
+use App\Models\User;
+use App\Services\TransferService;
 
 class TransactionController extends Controller
 {
-    protected $transferService;
+    protected TransferService $transferService;
 
     public function __construct(TransferService $transferService)
     {
@@ -21,6 +23,7 @@ class TransactionController extends Controller
 
     /**
      * Handles funds deposit to the user's default account.
+     * @throws InvalidTransferException
      */
     public function deposit(DepositRequest $request, User $user): DepositResponse
     {
@@ -36,6 +39,9 @@ class TransactionController extends Controller
 
     /**
      * Handles funds transfer between users' default accounts.
+     * 
+     * @throws InsufficientFundsException
+     * @throws InvalidTransferException
      */
     public function transfer(TransferRequest $request): TransferResponse
     {

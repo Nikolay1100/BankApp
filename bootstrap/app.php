@@ -23,38 +23,38 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        
-        // Глобальный перехват исключений для API
+
+        // Global exception handling for API
         $exceptions->render(function (Throwable $e, Request $request) {
-            
-            // Обрабатываем только запросы, идущие по пути /api/*
+
+            // Handle only requests going through the /api/* path
             if ($request->is('api/*')) {
                 $response = app(ResponseService::class);
-                
-                // 1. Ошибки валидации
+
+                // 1. Validation errors
                 if ($e instanceof ValidationException) {
                     return $response->badRequest($e->getMessage(), $e->errors());
                 }
-                
-                // 2. Отказ в доступе (403)
+
+                // 2. Access denied (403)
                 if ($e instanceof AccessDeniedHttpException) {
-                    return $response->forbidden($e->getMessage() ?: 'This action is unauthorized.');
+                    return $response->forbidden('This action is unauthorized.');
                 }
-                
-                // 3. Отсутствие авторизации (401)
+
+                // 3. Absence of authorization (401)
                 if ($e instanceof AuthenticationException) {
-                    return $response->unauthorized($e->getMessage() ?: 'Unauthenticated.');
+                    return $response->unauthorized('Unauthenticated.');
                 }
-                
-                // 4. Ресурс не найден (404)
+
+                // 4. Resource not found (404)
                 if ($e instanceof NotFoundHttpException) {
-                    return $response->notFound($e->getMessage() ?: 'Resource not found.');
+                    return $response->notFound('Resource not found.');
                 }
-                
-                // 5. Все остальные HTTP исключения
+
+                // 5. All other HTTP exceptions
                 $code = $e instanceof HttpException ? $e->getStatusCode() : 500;
                 $message = $e->getMessage() ?: 'Internal Server Error.';
-                
+
                 return $response->sendJsonResponse(false, $code, $message);
             }
         });

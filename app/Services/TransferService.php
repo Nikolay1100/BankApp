@@ -12,6 +12,7 @@ use Money\Money;
 use App\Exceptions\AppException;
 use App\Enums\TransactionType;
 use App\Enums\TransactionStatus;
+use Throwable;
 
 class TransferService
 {
@@ -71,7 +72,7 @@ class TransferService
      * @param array $metadata
      * @return Transaction
      * @throws InsufficientFundsException
-     * @throws InvalidTransferException
+     * @throws InvalidTransferException|Throwable
      */
     public function transfer(
         User $sender,

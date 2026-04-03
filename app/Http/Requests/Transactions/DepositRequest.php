@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Transactions;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Money\Money;
 use Money\Currency;
+use Money\Money;
 
 class DepositRequest extends FormRequest
 {
